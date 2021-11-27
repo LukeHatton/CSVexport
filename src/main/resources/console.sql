@@ -1,8 +1,7 @@
 /*---------------- 创建测试数据 ----------------*/
 # CREATE DATABASE test_database;
 USE test_database;
-CREATE TABLE test_table
-(
+CREATE TABLE test_table (
     id       INT AUTO_INCREMENT,
     column_2 VARCHAR(64) NULL,
     column_3 VARCHAR(64) NULL,
@@ -15,7 +14,8 @@ CREATE TABLE test_table
     CONSTRAINT test_table_id_uindex
         UNIQUE (id)
 )
-    COMMENT '测试表' ENGINE = MyISAM;
+    COMMENT '测试表'
+    ENGINE = MyISAM;
 
 ALTER TABLE test_table
     ADD PRIMARY KEY (id);
@@ -23,11 +23,12 @@ ALTER TABLE test_table
 /*---------------- 使用游标循环插入测试数据 ----------------*/
 # 一百万测试数据
 DELIMITER %
-DROP PROCEDURE IF EXISTS proc_insertFooData;
-CREATE PROCEDURE proc_insertFooData()
+DROP PROCEDURE IF EXISTS proc_insertfoodata;
+CREATE PROCEDURE proc_insertfoodata()
 BEGIN
     DECLARE count INT DEFAULT 0;
-    loop_label: LOOP
+    loop_label:
+    LOOP
         IF count > 1000 * 1000 THEN
             LEAVE loop_label;
         ELSE
@@ -41,7 +42,7 @@ DELIMITER ;
 
 # InnoDB和MyISAM的插入效率差的也太多了，用InnoDB插入10万数据花了超过十秒，用MyISAM插入90万数据也只花了不到9秒
 # 需要学习一下InnoDB和MyISAM存储引擎的差别
-CALL proc_insertFooData();
+CALL proc_insertfoodata();
 
 SELECT COUNT(1)
 FROM test_table;
@@ -61,6 +62,11 @@ SHOW TABLE STATUS LIKE 'test_table';
 # 不过既然生辰数据库使用的是MyISAM引擎，这里也就使用它测试
 SELECT *
 FROM test_table;
+SELECT *
+FROM test_table
+WHERE id BETWEEN 1 AND 1;
+SELECT *
+FROM test_table LIMIT 2;
 # 存储引擎更换为MyISAM
 ALTER TABLE test_table
     ENGINE =MyISAM;

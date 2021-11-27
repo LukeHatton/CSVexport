@@ -14,5 +14,13 @@ import java.util.List;
  */
 @Component
 public interface TestTableMapper {
+    Integer countAll();
+
+    /**
+     * 查询该分页内全部数据
+     *
+     * @param page 分页信息
+     * @return 数据集合
+     */
     List<TestTable> selectAll(Page page);
 }

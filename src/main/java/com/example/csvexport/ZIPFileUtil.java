@@ -27,7 +27,8 @@ public class ZIPFileUtil {
         stopWatch.start();
 
         File source = new File(sourceFile);                 //源文件File
-        ZipEntry zipEntry = new ZipEntry(sourceFile);       //ZipEntry，通过这个对象可以压缩多个文件
+        //ZipEntry，通过这个对象可以压缩多个文件
+        ZipEntry zipEntry = new ZipEntry(sourceFile.substring(sourceFile.lastIndexOf(File.separator) + 1));
         File zip = new File(targetFile);                    //要生成的zip文件
         if (zip.exists()) zip.delete();                     //若文件已经存在，则先删除
         @Cleanup BufferedInputStream in = new BufferedInputStream(new FileInputStream(source));
@@ -46,7 +47,6 @@ public class ZIPFileUtil {
         stopWatch.stop();
         System.out.println("成功生成压缩文件！path=" + targetFile);
         System.out.println("生成文件共耗时(ms)：" + stopWatch.getTotalTimeMillis());
-        System.out.println(stopWatch.prettyPrint());
     }
 
 }

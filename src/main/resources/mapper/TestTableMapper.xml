@@ -15,10 +15,15 @@
         <result column="column_9" jdbcType="VARCHAR" javaType="java.lang.String" property="column9"/>
     </resultMap>
 
+    <select id="countAll" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM test_table
+    </select>
+
     <select id="selectAll" parameterType="com.example.csvexport.bean.Page"
             resultMap="baseResultMap">
         SELECT *
-        FROM test_table
-        LIMIT #{currentPage},#{recordsPerPage};
+        FROM test_table WHERE id
+        BETWEEN #{currentIndex} AND #{endIndex};
     </select>
 </mapper>

@@ -9,7 +9,7 @@ import lombok.Data;
  * @author lizhao 2021/11/27
  */
 @Data
-public class TestTable {
+public class TestTable implements Comparable<TestTable>{
     private Integer id;
     private String column2;
     private String column3;
@@ -19,4 +19,9 @@ public class TestTable {
     private String column7;
     private String column8;
     private String column9;
+
+    @Override
+    public int compareTo(TestTable o) {
+        return 0;
+    }
 }
