@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.csvexport.mapper.TestTableMapper">
+    <resultMap id="baseResultMap" type="com.example.csvexport.bean.TestTable">
+        <id column="id" jdbcType="INTEGER" javaType="java.lang.Integer" property="id"/>
+        <result column="column_2" jdbcType="VARCHAR" javaType="java.lang.String" property="column2"/>
+        <result column="column_3" jdbcType="VARCHAR" javaType="java.lang.String" property="column3"/>
+        <result column="column_4" jdbcType="VARCHAR" javaType="java.lang.String" property="column4"/>
+        <result column="column_5" jdbcType="VARCHAR" javaType="java.lang.String" property="column5"/>
+        <result column="column_6" jdbcType="VARCHAR" javaType="java.lang.String" property="column6"/>
+        <result column="column_7" jdbcType="VARCHAR" javaType="java.lang.String" property="column7"/>
+        <result column="column_8" jdbcType="VARCHAR" javaType="java.lang.String" property="column8"/>
+        <result column="column_9" jdbcType="VARCHAR" javaType="java.lang.String" property="column9"/>
+    </resultMap>
+
+    <select id="selectAll" parameterType="com.example.csvexport.bean.Page"
+            resultMap="baseResultMap">
+        SELECT *
+        FROM test_table
+        LIMIT #{currentPage},#{recordsPerPage};
+    </select>
+</mapper>
