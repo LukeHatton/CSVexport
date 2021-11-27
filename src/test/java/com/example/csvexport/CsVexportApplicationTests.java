@@ -14,10 +14,11 @@ import org.springframework.util.StopWatch;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -31,9 +32,6 @@ class CsVexportApplicationTests {
 
     /* 线程池。希望按顺序写入文件，于是使用单线程写入 */
     private ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
-
-    /* 任务队列 */
-    private ConcurrentLinkedQueue<List<? extends TestTable>> queue;
 
     @Test
     void contextLoads() {
@@ -78,29 +76,34 @@ class CsVexportApplicationTests {
         );
         //写入数据头
         CSVExportUtil.writeTitle(titles, os);
+        os.close();
         log.info("写入文件头数据：成功！");
-        //要写入的字段名
-        ArrayList<String> fieldNameList = new ArrayList<>(titles);
-
-        //==>异步任务
-        // executorService.scheduleAtFixedRate(new CSVWriteDateRunnable(file),0,20, TimeUnit.MILLISECONDS);
 
         /* ---------------- 执行查询 ----------------- */
         Integer countAll = testTableMapper.countAll();
-        int recordsPerPage = 10000;
+        int recordsPerPage = 50000;
+        CountDownLatch countDownLatch = new CountDownLatch(countAll / recordsPerPage + 1);      //异步任务计数器
         for (int i = 0; i < countAll / recordsPerPage + 1; i++) {
             Page page = new Page(i, recordsPerPage, countAll);
             log.info("==>当前页码：【{}】 开始索引：【{}】 结束索引：【{}】", i, page.getCurrentIndex(), page.getEndIndex());
             //==>分页查询并写入文件
             List<TestTable> testTableList = testTableMapper.selectAll(page);
-            queue.add(testTableList);
-            CSVExportUtil.writeData(TestTable.class, testTableList, fieldNameList, os);
-            os.flush();
+            Queue<List<TestTable>> csvQueue = BeanUtil.getBean("csvQueue", ConcurrentLinkedQueue.class);
+            csvQueue.add(testTableList);
+            //==>调用异步任务写入文件
+            executorService.scheduleAtFixedRate(new CSVWriteDateRunnable(file, countDownLatch), 0, 50, TimeUnit.MILLISECONDS);
         }
-
-        os.close();
+        //主线程在此阻塞，等待异步任务完成，在countDownLatch减至0后会解除阻塞.
+        countDownLatch.await(8000, TimeUnit.MILLISECONDS);                  //线程超时：8000毫秒
         stopWatch.stop();
         log.info("文件写入完成，共耗时(ms)：" + stopWatch.getTotalTimeMillis());
+    }
+
+    @Test
+    public void test03() {
+        System.out.println(1000001 / 50000 + 1);
+        Queue<List<TestTable>> csvQueue = BeanUtil.getBean("csvQueue", ConcurrentLinkedQueue.class);
+        System.out.println(csvQueue);
     }
 
 }

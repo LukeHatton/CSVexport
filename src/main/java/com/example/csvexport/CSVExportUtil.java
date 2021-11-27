@@ -1,6 +1,5 @@
 package com.example.csvexport;
 
-import com.example.csvexport.bean.TestTable;
 import lombok.SneakyThrows;
 
 import java.io.BufferedOutputStream;
@@ -10,7 +9,6 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * <p>project: CSVexport
@@ -58,6 +56,7 @@ public class CSVExportUtil {
         String s = builder.toString();
         String subString = removeLastChar(s);
         writer.append(subString).append(CSV_LINE_SEPARATOR);
+        writer.flush();
     }
 
     @SneakyThrows
