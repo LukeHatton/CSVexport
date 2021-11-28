@@ -54,7 +54,8 @@ class CsVexportApplicationTests {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         /* ---------------- 创建文件 ----------------- */
-        File file = new File("E:\\test\\testdata.csv");
+        //File file = new File("E:\\test\\testdata.csv");
+        File file = new File("/Users/lizhao/Downloads/test folder/testdata.csv");
         if (file.exists()) {
             file.delete();
             file.createNewFile();
@@ -97,13 +98,46 @@ class CsVexportApplicationTests {
         countDownLatch.await(8000, TimeUnit.MILLISECONDS);                  //线程超时：8000毫秒
         stopWatch.stop();
         log.info("文件写入完成，共耗时(ms)：" + stopWatch.getTotalTimeMillis());
+        ZIPFileUtil.compress("/Users/lizhao/Downloads/test folder/testdata.csv",
+                "/Users/lizhao/Downloads/test folder/testdata.zip");
     }
 
+    /* 从数据流中直接写入压缩文件 */
+    @SneakyThrows
     @Test
-    public void test03() {
-        System.out.println(1000001 / 50000 + 1);
-        Queue<List<TestTable>> csvQueue = BeanUtil.getBean("csvQueue", ConcurrentLinkedQueue.class);
-        System.out.println(csvQueue);
+    public void test03(){
+        FileOutputStream os = new FileOutputStream("/Users/lizhao/Downloads/test folder/testdata.zip");
+        //数据头
+        List<String> titles = Arrays.asList(
+                "id",
+                "column2",
+                "column3",
+                "column4",
+                "column5",
+                "column6",
+                "column7",
+                "column8",
+                "column9"
+        );
+        //写入数据头
+        CSVExportUtil.writeTitle(titles, os);
+        os.close();
+        log.info("写入文件头数据：成功！");
+        /* ---------------- 执行查询 ----------------- */
+        Integer countAll = testTableMapper.countAll();
+        int recordsPerPage = 50000;
+        CountDownLatch countDownLatch = new CountDownLatch(countAll / recordsPerPage + 1);      //异步任务计数器
+        for (int i = 0; i < countAll / recordsPerPage + 1; i++) {
+            Page page = new Page(i, recordsPerPage, countAll);
+            log.info("==>当前页码：【{}】 开始索引：【{}】 结束索引：【{}】", i, page.getCurrentIndex(), page.getEndIndex());
+            //==>分页查询并写入文件
+            List<TestTable> testTableList = testTableMapper.selectAll(page);
+            ZIPFileUtil.compressFromList(TestTable.class, testTableList,titles,"/Users/lizhao/Downloads/test folder/testdata.zip");
+            ////Queue<List<TestTable>> csvQueue = BeanUtil.getBean("csvQueue", ConcurrentLinkedQueue.class);
+            //csvQueue.add(testTableList);
+            ////==>调用异步任务写入文件
+            //executorService.scheduleAtFixedRate(new CSVWriteDateRunnable(file, countDownLatch), 0, 50, TimeUnit.MILLISECONDS);
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 package com.example.csvexport;
 
+import com.example.csvexport.util.ReflectUtil;
 import lombok.SneakyThrows;
 
 import java.io.BufferedOutputStream;
@@ -7,8 +8,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>project: CSVexport
@@ -21,9 +22,9 @@ import java.util.List;
  */
 public class CSVExportUtil {
 
-    private static final String CSV_COLUMN_SEPARATOR = ",";
+    public static final String CSV_COLUMN_SEPARATOR = ",";
 
-    private static final String CSV_LINE_SEPARATOR = System.lineSeparator();
+    public static final String CSV_LINE_SEPARATOR = System.lineSeparator();
 
     /**
      * 导出CSV文件
@@ -53,8 +54,7 @@ public class CSVExportUtil {
         for (String title : titles) {
             builder.append(title).append(CSV_COLUMN_SEPARATOR);
         }
-        String s = builder.toString();
-        String subString = removeLastChar(s);
+        String subString = removeLastChar(builder);
         writer.append(subString).append(CSV_LINE_SEPARATOR);
         writer.flush();
     }
@@ -63,33 +63,45 @@ public class CSVExportUtil {
     public static <T> void writeData(Class<? extends T> clz, List<T> dataList, List<String> fieldNameList, OutputStream os) {
         OutputStreamWriter writer = new OutputStreamWriter(new BufferedOutputStream(os, 8192 * 10), StandardCharsets.UTF_8);
 
-        //数据非空，写入数据
+        //数据非空，则写入数据
         if (dataList != null && dataList.size() > 0) {
-            //拼接get方法名
-            ArrayList<String> getMethodNames = fieldNameList.stream()
-                    .map(fieldName -> "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1))
-                    .collect(ArrayList::new, List::add, List::addAll);
-
-
+            //获取方法引用数组
+            List<Method> methodList = ReflectUtil.getMethodList(fieldNameList, clz);
             /* ---------------- 组装数据 ----------------- */
-            for (T t : dataList) {
-                StringBuilder builder = new StringBuilder();
-                for (String getMethodName : getMethodNames) {
-                    Method method = clz.getMethod(getMethodName);
-                    Object result = method.invoke(t);               //实际要写入的数据
-                    builder.append(result.toString()).append(CSV_COLUMN_SEPARATOR);
-                }
-                String s = builder.toString();
-                String subString = removeLastChar(s);
-                writer.append(subString).append(CSV_LINE_SEPARATOR);
-            }
+            writeDataToWriter(dataList, methodList, writer);
             //防止数据不完整,进行一次flush
             writer.flush();
         }
     }
 
-    public static String removeLastChar(String string) {
+    /**
+     * 移除StringBuilder生成的最后一个字符
+     */
+    public static String removeLastChar(StringBuilder builder) {
+        String string = builder.toString();
         return string.substring(0, string.length() - 1);
+    }
+
+    /**
+     * 向输出流里写入数据
+     *
+     * @param dataList   要写入的数据List
+     * @param methodList List参数化类型的方法引用
+     * @param writer     输出流
+     * @param <T>        参数化类型
+     */
+    @SneakyThrows
+    public static <T> void writeDataToWriter(List<T> dataList, List<Method> methodList, OutputStreamWriter writer) {
+        for (Object object : dataList) {
+            StringBuilder builder = new StringBuilder();
+            for (Method method : methodList) {
+                Object result = method.invoke(object);
+                builder.append(result.toString()).append(CSV_COLUMN_SEPARATOR);
+            }
+            String dataToWrite = removeLastChar(builder);
+            //像压缩文件中写入数据
+            writer.append(dataToWrite).append(CSV_LINE_SEPARATOR);
+        }
     }
 
 }

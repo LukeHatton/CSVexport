@@ -1,15 +1,19 @@
 package com.example.csvexport;
 
+import com.example.csvexport.util.ReflectUtil;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import org.springframework.util.StopWatch;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static com.example.csvexport.CSVExportUtil.*;
 
 public class ZIPFileUtil {
 
@@ -47,6 +51,27 @@ public class ZIPFileUtil {
         stopWatch.stop();
         System.out.println("成功生成压缩文件！path=" + targetFile);
         System.out.println("生成文件共耗时(ms)：" + stopWatch.getTotalTimeMillis());
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static <T> void compressFromList(Class<?> clz, List<T> dataList, List<String> fieldNameList, String targetFile) {
+        //方法引用
+        List<Method> methodList = ReflectUtil.getMethodList(fieldNameList, clz);
+        /*---------------- 生成zip文件 ----------------*/
+        File zip = new File(targetFile);
+        if (!zip.exists()) zip.createNewFile();
+
+        //TODO 这种实现有问题，相当于每批次数据都向压缩文件中写入了一个新zipEntry
+        ZipEntry zipEntry = new ZipEntry(targetFile.substring(targetFile.lastIndexOf(File.separator) + 1));
+        ZipOutputStream zipOs = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zip, true)));
+        zipOs.putNextEntry(zipEntry);
+        @Cleanup OutputStreamWriter writer = new OutputStreamWriter(zipOs, StandardCharsets.UTF_8);
+
+        /*---------------- 拼接数据 ----------------*/
+        writeDataToWriter(dataList, methodList, writer);
+        //清空缓冲区中剩下的数据
+        writer.flush();
     }
 
 }
