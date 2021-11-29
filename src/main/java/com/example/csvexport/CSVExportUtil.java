@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * <p>project: CSVexport
@@ -54,8 +53,8 @@ public class CSVExportUtil {
         for (String title : titles) {
             builder.append(title).append(CSV_COLUMN_SEPARATOR);
         }
-        String subString = removeLastChar(builder);
-        writer.append(subString).append(CSV_LINE_SEPARATOR);
+        builder.deleteCharAt(builder.length() - 1).append(CSV_LINE_SEPARATOR);
+        writer.append(builder);
         writer.flush();
     }
 
@@ -75,14 +74,6 @@ public class CSVExportUtil {
     }
 
     /**
-     * 移除StringBuilder生成的最后一个字符
-     */
-    public static String removeLastChar(StringBuilder builder) {
-        String string = builder.toString();
-        return string.substring(0, string.length() - 1);
-    }
-
-    /**
      * 向输出流里写入数据
      *
      * @param dataList   要写入的数据List
@@ -98,9 +89,9 @@ public class CSVExportUtil {
                 Object result = method.invoke(object);
                 builder.append(result.toString()).append(CSV_COLUMN_SEPARATOR);
             }
-            String dataToWrite = removeLastChar(builder);
+            builder.deleteCharAt(builder.length() - 1).append(CSV_LINE_SEPARATOR);
             //像压缩文件中写入数据
-            writer.append(dataToWrite).append(CSV_LINE_SEPARATOR);
+            writer.append(builder);
         }
     }
 
